@@ -1,0 +1,18 @@
+BEGIN {
+    dram_w=10
+    dram_r=10
+    nvm_w=10
+    nvm_r=10
+    disk_w=1000
+    disk_r=500
+}
+{
+# $15, gWMissEvictDRAM
+# $14, gWMissEvictNVRAM
+# $13, gRMiss
+# $11, gNumWonNVRAM
+# $10, gNumWonDRAM
+# $3, gNumFlush
+    print $15*(nvm_r+dram_w+disk_r+nvm_w)+$14*(disk_r+_nvm_w)+$13*(disk_r+nvm_w)+$11*(nvm_w)+$10*(nvm_r+nvm_w+dram_r+dram_w)+$3*disk_w
+}
+

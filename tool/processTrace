@@ -1,0 +1,32 @@
+BEGIN {
+    pageSize=4096
+    addressBase=16
+}
+{
+    if ($9 == "+") {
+        if ($10 > pageSize) {
+            nPages=$10/pageSize
+
+                if ($10 % pageSize != 0) {
+                    nPages = nPages + 1
+                }
+
+            for(i = 0; i < nPages; i++) {
+                if ($7 ~/W/) {
+                    print int($8/addressBase)+i,"0" # 0 is for Write
+                }
+                else if ($7 ~/R/) {
+                    print int($8/addressBase)+i,"1" # 1 is for Read
+                }
+            }
+        } else {
+            if ($7 ~ /W/) {
+                print int($8/addressBase),"0" # 0 is for Write
+            } else if ($7 ~ /R/) {
+                print int($8/addressBase),"1" # 1 is for Read
+            }
+
+        }
+    }
+}
+

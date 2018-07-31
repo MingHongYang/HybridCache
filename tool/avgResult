@@ -1,0 +1,18 @@
+BEGIN {
+}
+{
+# $15, gWMissEvictDRAM
+# $14, gWMissEvictNVRAM
+# $13, gRMiss
+# $11, gNumWonNVRAM
+# $10, gNumWonDRAM
+# $8, gNumRonDRAM
+# $9, gNumRonNVRAM
+# $3, gNumFlush
+# $16, gWHit
+# $17, gRHit
+# $18, gWTotal
+# $19, gRTotal
+    print $1, $16/$18, $17/$19, $10/$18, $11/$18, $8/$19, $9/$19
+}
+

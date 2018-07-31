@@ -1,0 +1,41 @@
+BEGIN {
+    FS=","
+    pageSize=4096
+    addressBase=512
+}
+{
+    if ($6 > pageSize)
+    {
+        nPages=$6/pageSize
+
+        if ($6 % pageSize != 0)
+        {
+            nPages = nPages + 1
+        }
+
+        for(i = 0; i < nPages; i++)
+        {
+            if ($4 == "Write") 
+            {
+                print ($5/addressBase)+i,"0" # 0 is for Write
+            }
+            else
+            {
+                print ($5/addressBase)+i,"1" # 1 is for Read
+            }
+        }
+    }
+    else
+    {
+        if ($4 == "Write")
+        {
+            print $5/addressBase,"0" # 0 is for Write
+        }
+        else
+        {
+            print $5/addressBase,"1" # 1 is for Read
+        }
+
+    }
+}
+
