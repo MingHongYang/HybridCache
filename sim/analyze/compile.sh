@@ -1,1 +1,1 @@
-g++ -std=c++11 analyzer.cpp
+g++ -std=c++11 analyzer_m.cpp

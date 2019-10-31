@@ -1,0 +1,9 @@
+BEGIN {
+}
+NR==1{
+    print $1, $2, $3, $4, $1/$5, $2/$6, $3/$5, $4/$6
+}
+
+
+# gWMiss, gRMiss, gWHit, gRHit, gWTotal, gRTotal
+# TARGET_READ_SIZE, TARGET_WRITE_SIZE, TARGET_RR_SIZE, TARGET_RF_SIZE, TARGET_WR_SIZE, TARGET_WF_SIZE

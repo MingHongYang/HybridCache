@@ -1,3 +1,7 @@
+#include <map>
+
+class PageInfo;
+
 struct Node {
     Node() {
         page = NULL;
@@ -35,14 +39,14 @@ class LinkedList {
         bool remove(uintmax_t pageNumber);
         bool removeNode(Node *victim);
         void removePage(Node *victim);
-        uintmax_t getSize();
+        int getSize();
         void printList();
         bool find(uintmax_t);
     private:
         Node *top;
         Node *bottom;
-        uintmax_t size;
-        unordered_map<uintmax_t, Node *> mapping;
+        int size;
+        std::unordered_map<uintmax_t, Node *> mapping;
 };
 
 LinkedList::LinkedList() {
@@ -70,7 +74,7 @@ void LinkedList::addFront(Node *newNode) {
     size++;
 
     // Update map
-    mapping.insert(make_pair(newNode->page->getPageNumber(), newNode));
+    mapping.insert(std::make_pair(newNode->page->getPageNumber(), newNode));
 }
 
 void LinkedList::addBack(Node *newNode) {
@@ -89,7 +93,7 @@ void LinkedList::addBack(Node *newNode) {
     size++;
 
     // Update map
-    mapping.insert(make_pair(newNode->page->getPageNumber(), newNode));
+    mapping.insert(std::make_pair(newNode->page->getPageNumber(), newNode));
 }
 
 bool LinkedList::removeTop() {
@@ -196,7 +200,7 @@ void LinkedList::removePage(Node *victim) {
     free(victim->page);
 }
 
-uintmax_t LinkedList::getSize() {
+int LinkedList::getSize() {
     return size;
 }
 

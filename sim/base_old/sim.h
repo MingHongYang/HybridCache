@@ -1,22 +1,31 @@
 #include <algorithm>
 #include <cerrno>
+
 #include <chrono>
+
 #include <cinttypes>
+
 #include <cstdbool>
 #include <cstdint>
 #include <cstdio>
+
 #include <iostream>
+
 #include <unordered_map>
 #include <vector>
 
 using namespace std;
 
 enum OPType {WRITE, READ};
-enum MemType {DRAM, NVRAM};
+enum MemType {DRAM, NVRAM, SYSTEM};
 enum PageStatus {DIRTY, CLEAN};
-enum CacheStatus {RRR, RRG, RFR, RFG, WRR, WRG, WFR, WFG};
+
+//#define NVRAM_SIZE 5
+//#define DRAM_SIZE 5
 
 #define DEBUG false
+#define MAX_CON_READS 10
+#define CLEAN_PAGE_OFFSET 1
 
 class PageInfo
 {
@@ -26,10 +35,9 @@ class PageInfo
     OPType eOPType;
     MemType eMemType;
     PageStatus eDirty;
-    LinkedList *curList;
 
     public:
-
+    
     bool operator < (const PageInfo& page) const
     {
         // The page with greater consecutive reads will be placed at the back of the vector

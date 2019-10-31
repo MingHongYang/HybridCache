@@ -11,7 +11,7 @@ int main() {
 
     tmpNode->page = tmp;
 
-    myList.addFront(*tmpNode);
+    myList.addFront(tmpNode);
 
     cout << myList.getSize();
 
@@ -19,38 +19,41 @@ int main() {
     tmpNode = new Node();
     tmpNode->page = tmp;
 
-    myList.addFront(*tmpNode);
+    myList.addFront(tmpNode);
 
-    tmp = myList.getTop();
+    tmpNode = myList.getTop();
     cout << myList.getSize() << endl;
-    cout << tmp->getPageNumber() << endl;
+    cout << tmpNode->page->getPageNumber() << endl;
 
     myList.removeTop();
 
-    tmp = myList.getTop();
+    tmpNode = myList.getTop();
     cout << myList.getSize() << endl;
-    cout << tmp->getPageNumber() << endl;
+    cout << tmpNode->page->getPageNumber() << endl;
 
     tmp = new PageInfo(WRITE, 5555, DRAM, gCounter);
     Node *rmNode = new Node();
     rmNode->page = tmp;
-    myList.addFront(*rmNode);
+    myList.addFront(rmNode);
     tmp = new PageInfo(WRITE, 4444, DRAM, gCounter);
     tmpNode = new Node();
     tmpNode->page = tmp;
-    myList.addFront(*tmpNode);
+    myList.addFront(tmpNode);
 
     cout << myList.getSize();
     myList.printList();
-    myList.removeNode(*rmNode);
+    myList.removeNode(rmNode);
     myList.printList();
 
     tmp = new PageInfo(WRITE, 666, DRAM, gCounter);
     tmpNode = new Node();
     tmpNode->page = tmp;
-    myList.addBack(*tmpNode);
+    myList.addBack(tmpNode);
 
     myList.printList();
+
+    cout << myList.find(666) << endl;
+    myList.remove(666);
 
     myList.removeBottom();
     myList.printList();
