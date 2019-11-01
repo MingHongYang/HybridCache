@@ -49,35 +49,27 @@ int main(int argc, char* argv[]) {
 
         // Read trace
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
-
-
-        //assert(nextRequest[uPage]->front() == gTimeStamp);
+        gTotal++;
 
         // Check if it's in the cache
         if (sysMap.count(uPage) != 0) {
             // In the cache
-            PageInfo *found = sysMap[uPage];
-            found->getList()->remove(uPage);
-            found->setTimeStamp(gTimeStamp);
-
-            // Update heap
-            found->getQueue()->pop();
             if (u8OP == READ) {
+                PageInfo *found = sysMap[uPage];
+                found->getList()->remove(uPage);
+                found->setTimeStamp(gTimeStamp);
+                // Update heap
+                assert(nextRequest[uPage]->front() == gTimeStamp);
+                found->getQueue()->pop();
                 gHeap.pageHit(found->getIndex());
                 gHit++;
+                found->getList()->addBack(new Node(found));
             } else {
                 gFlush++;
             }
-
-            gTotal++;
-
-            found->getList()->addBack(new Node(found));
         } else {
             // Cache miss, prepare new page
             PageInfo *newPage = new PageInfo((OPType)u8OP, uPage, gTimeStamp);
-
-            // READ
-            gTotal++;
             gMiss++;
 
             if (dram.getSize() == DRAM_SIZE) {
@@ -90,7 +82,7 @@ int main(int argc, char* argv[]) {
 
                 free(tmp);
             }
-            
+
             // Update page
             newPage->setQueue(nextRequest[uPage]);
 
