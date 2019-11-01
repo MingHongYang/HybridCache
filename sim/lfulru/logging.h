@@ -24,7 +24,7 @@ uintmax_t gHitR = 0;
 uintmax_t gHitGF = 0;
 uintmax_t gHitGR = 0;
 uintmax_t gMiss = 0;
-
+uintmax_t gFlush = 0;
 
 uintmax_t gWMissEvictNVRAM = 0;
 uintmax_t gWMissEvictDRAM = 0;

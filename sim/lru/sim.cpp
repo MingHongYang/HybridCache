@@ -37,16 +37,18 @@ int main(int argc, char* argv[]) {
         // Read trace
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
 
-        if (u8OP == WRITE) {
-            // Skip writes
-            continue;
-        }
-
         gTotal++;
 
         // Check if it's in the cache
         if (sysMap.count(uPage) != 0) {
-            gHit++;
+            if (u8OP == WRITE) {
+                // We do not change the priority of pages for page writes
+                gFlush++;
+                continue;
+            } else {
+                gHit++;
+            }
+
             // In the cache
             PageInfo *found = sysMap[uPage];
             found->setTimeStamp(gTimeStamp);
@@ -60,13 +62,16 @@ int main(int argc, char* argv[]) {
             // Put into system map
             sysMap.insert(make_pair(uPage, newPage));
 
+            if (u8OP == WRITE) {
+                gFlush++;
+            }
             newPage->setList(&lru);
             newPage->getList()->addBack(new Node(newPage));
             Evict();
         }
     }
 
-    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gMiss, gHit, gTotal);
+    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gMiss, gHit, gTotal, gFlush);
 
     // Close file
     fclose(pfInput);

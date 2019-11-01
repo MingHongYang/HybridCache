@@ -88,15 +88,17 @@ int main(int argc, char* argv[]) {
             found->setTimeStamp(gTimeStamp);
 
             if (found->getCacheType() == REAL) {
-                // Remove from both lists
-                found->getListR()->remove(uPage);
-                found->getListF()->remove(uPage);
-
-                gHitR++;
                 if (u8OP == WRITE) {
                     // WRITE
+                    gFlush++;
+                    continue;
                 } else if (u8OP == READ) {
                     // READ
+                    gHitR++;
+
+                    // Remove from both lists
+                    found->getListR()->remove(uPage);
+                    found->getListF()->remove(uPage);
 
                     found->pageHit(MAX_FREQ);
                     found->getListR()->addBack(new Node(found));
@@ -104,6 +106,10 @@ int main(int argc, char* argv[]) {
                     found->getListF()->addBack(new Node(found));
                 }
             } else {
+                if (u8OP == WRITE) {
+                    gFlush++;
+                }
+
                 // Remove from ghost list
                 found->getList()->remove(uPage);
 
@@ -138,23 +144,21 @@ int main(int argc, char* argv[]) {
             sysMap.insert(make_pair(uPage, newPage));
 
             if (u8OP == WRITE) {
-            } else if (u8OP == READ) {
-                // READ
-
-                Evict();
-
-                newPage->setCacheType(REAL);
-
-                newPage->setListR(&lru);
-                newPage->setListF(lfu[0]);
-                newPage->getListR()->addBack(new Node(newPage));
-                newPage->getListF()->addBack(new Node(newPage));
-
+                gFlush++;
             }
+
+            Evict();
+
+            newPage->setCacheType(REAL);
+
+            newPage->setListR(&lru);
+            newPage->setListF(lfu[0]);
+            newPage->getListR()->addBack(new Node(newPage));
+            newPage->getListF()->addBack(new Node(newPage));
         }
     }
 
-    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gHitR, gHitGR, gHitGF, gMiss, gTotal);
+    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gHitR, gHitGR, gHitGF, gMiss, gTotal, gFlush);
 
     // Close file
     fclose(pfInput);

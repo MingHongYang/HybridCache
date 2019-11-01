@@ -66,7 +66,14 @@ int main(int argc, char* argv[]) {
 
         // Check if it's in the cache
         if (sysMap.count(uPage) != 0) {
-            gHit++;
+            if (u8OP == READ) {
+                gHit++;
+            } else {
+                // We ignore write hits on pages and does not count into frequency
+                gFlush++;
+                continue;
+            }
+
             // In the cache
             PageInfo *found = sysMap[uPage];
             found->getList()->remove(uPage);
@@ -76,6 +83,11 @@ int main(int argc, char* argv[]) {
             found->getList()->addBack(new Node(found));
         } else {
             gMiss++;
+
+            if (u8OP == WRITE) {
+                gFlush++;
+            }
+
             // Cache miss, prepare new page
             PageInfo *newPage = new PageInfo((OPType)u8OP, uPage, gTimeStamp);
 
@@ -89,7 +101,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gTotal, gMiss, gHit);
+    fprintf(pfOutput, "%" SCNuMAX " %" SCNuMAX " %" SCNuMAX " %" SCNuMAX "\n", gTotal, gMiss, gHit, gFlush);
 
     // Close file
     fclose(pfInput);
