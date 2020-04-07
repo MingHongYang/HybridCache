@@ -9,6 +9,8 @@ int main(int argc, char* argv[]) {
     DRAM_SIZE = stoi(argv[4]);
     TOTAL_SIZE = NVRAM_SIZE + DRAM_SIZE;
 
+    unordered_map<uintmax_t, queue<uintmax_t> *> nextRequest;
+
     if (!pfInput || !pfOutput) {
         // Error opening files
         printf("File name error\n");
@@ -88,8 +90,8 @@ int main(int argc, char* argv[]) {
             } else {
                 gFlush++;
             }
-            
-	    // Update page
+
+            // Update page
             PageInfo *newPage = new PageInfo((OPType)u8OP, uPage, gTimeStamp);
             newPage->setQueue(nextRequest[uPage]);
 
