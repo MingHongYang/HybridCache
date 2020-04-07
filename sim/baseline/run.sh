@@ -9,7 +9,6 @@ do
         echo ${filename}
         dram=$((dram_index * 12000))
         number=./logs/${filename}.output
-        stat=./logs/${filename}.size
         echo $logname
         nvram=$((128000 - dram))
         echo $nvram

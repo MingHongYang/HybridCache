@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
 
         if (nextRequest.count(uPage) == 0) {
-            nextRequest[uPage] = new queue<uintmax_t>();
+            nextRequest[uPage] = new queue<uintmax_t>;
         }
 
         if (u8OP == READ) {
@@ -57,7 +57,6 @@ int main(int argc, char* argv[]) {
             if (u8OP == READ) {
                 PageInfo *found = sysMap[uPage];
                 found->getList()->remove(uPage);
-                found->setTimeStamp(gTimeStamp);
                 // Update heap
                 assert(nextRequest[uPage]->front() == gTimeStamp);
                 found->getQueue()->pop();
@@ -67,6 +66,8 @@ int main(int argc, char* argv[]) {
             } else {
                 gFlush++;
             }
+
+            gTimeStamp++;
         } else {
             // Cache miss, prepare new page
             PageInfo *newPage = new PageInfo((OPType)u8OP, uPage, gTimeStamp);

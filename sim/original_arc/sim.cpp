@@ -33,7 +33,7 @@ void EvictGhost(LinkedList *list) {
 void Replace(CacheType type) {
     int rSize = rrCache.getSize();
 
-    if (rSize != 0 && rSize > TARGET_R_SIZE || (rSize == TARGET_R_SIZE && type == FG)) {
+    if (rSize != 0 && (rSize > TARGET_R_SIZE || (rSize == TARGET_R_SIZE && type == FG))) {
         EvictReal(&rrCache, &rgCache, RG);
     } else {
         EvictReal(&frCache, &fgCache, FG);
@@ -60,6 +60,7 @@ void Evict() {
     if (rSize == TOTAL_SIZE) {
         if (rrCache.getSize() < TOTAL_SIZE) {
             EvictGhost(&rgCache);
+            Replace(RG);
         } else {
             EvictReal(&rrCache, &rgCache, RG);
         }
@@ -121,6 +122,8 @@ int main(int argc, char* argv[]) {
                 found->setCacheType(FR);
                 found->setList(&frCache);
                 found->getList()->addBack(new Node(found));
+
+                Replace(RG);
             } else if (found->getCacheType() == FG) {
                 // Ghost hit, adjust boundary
                 double delta;
@@ -137,6 +140,8 @@ int main(int argc, char* argv[]) {
                 found->setCacheType(FR);
                 found->setList(&frCache);
                 found->getList()->addBack(new Node(found));
+
+                Replace(FG);
             } else {
                 // Real hit
                 if (u8OP == WRITE) {
@@ -157,11 +162,29 @@ int main(int argc, char* argv[]) {
             // Cache miss, prepare new page
             PageInfo *newPage = new PageInfo((OPType)u8OP, uPage, gTimeStamp);
 
-            // Put into system map
-            sysMap.insert(make_pair(uPage, newPage));
+            int rSize = rrCache.getSize() + rgCache.getSize();
 
-            // Evict one page if necessary
-            Evict();
+            if (rSize == TOTAL_SIZE) {
+                if (rrCache.getSize() < TOTAL_SIZE) {
+                    EvictGhost(&rgCache);
+                    Replace(RG);
+                } else {
+                    EvictReal(&rrCache, &rgCache, RG);
+                    EvictGhost(&rgCache);
+                }
+            } else if (rSize < TOTAL_SIZE) {
+                int fSize = frCache.getSize() + fgCache.getSize();
+
+                if (rSize + fSize == 2 * TOTAL_SIZE) {
+                    // Remove from FG
+                    EvictGhost(&fgCache);
+                }
+
+                // Evict one, not from frequency ghost
+                if (rSize + fSize >= TOTAL_SIZE) {
+                    Replace(RG); 
+                }
+            }
 
             if (u8OP == WRITE) {
                 // WRITE
@@ -170,6 +193,10 @@ int main(int argc, char* argv[]) {
                 // READ
                 gMiss++;
             }
+
+            // Put into system map
+            sysMap.insert(make_pair(uPage, newPage));
+
             newPage->setCacheType(RR);
             newPage->setList(&rrCache);
             newPage->getList()->addBack(new Node(newPage));

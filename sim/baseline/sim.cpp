@@ -43,10 +43,16 @@ int main(int argc, char* argv[]) {
             if (u8OP == WRITE) {
                 // WRITE
                 gWTotal++;
-                gWHit++;
 
-                if (found->getList() != &nvm && nvm.getSize() == NVRAM_SIZE) {
-                    EvictFrom(&nvm);
+                if (found->getList() == &nvm) {
+                    gWHit++;
+                }
+
+                if (found->getList() == &dram) {
+                    if (nvm.getSize() == NVRAM_SIZE) {
+                        EvictFrom(&nvm);
+                    }
+
                     found->setPageType(DIRTY);
                     found->setList(&nvm);
                 }

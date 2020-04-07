@@ -74,11 +74,6 @@ int main(int argc, char* argv[]) {
         // Read trace
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
 
-        if (u8OP == WRITE) {
-            // Skip writes
-            continue;
-        }
-
         gTotal++;
 
         // Check if it's in the cache

@@ -1,8 +1,6 @@
 #include <unordered_map>
 #include <vector>
-
 #include <cinttypes>
-
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -16,9 +14,14 @@ enum OP_TYPE {
     rr = 3
 };
 
+enum OP {
+    WRITE,
+    READ
+};
+
 class Trace {
     public:
         uintmax_t line;
-        int operation; // 0 for write and 1 for read
+        OP operation; // 0 for write and 1 for read
 };
 

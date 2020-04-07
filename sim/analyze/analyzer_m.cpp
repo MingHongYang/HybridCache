@@ -3,11 +3,12 @@
 
 unordered_map<uintmax_t, vector<uintmax_t>*> gTrace;
 
-// Usage: a.out input_file_name output_file_name
+// Usage: a.out input_file_name output_file_name window_size
 
 int main(int argc, char *argv[]) {
     FILE *pInput = fopen(argv[1], "r");
     FILE *pOutput = fopen(argv[2], "w");
+    int size = atoi(argv[3]);
     
     int operation;
     uintmax_t line = 0;
@@ -17,11 +18,10 @@ int main(int argc, char *argv[]) {
     unordered_map<uintmax_t, vector<uintmax_t>*>::iterator it;
 
     while (!feof(pInput)) {
-
         // Read from file
         fscanf(pInput, "%" SCNuMAX " %d", &page, &operation);
 
-        if (operation == 0) {
+        if (operation == READ) {
             it = gTrace.find(page);
             if (it == gTrace.end()) {
                 gTrace.insert(pair<int, vector<uintmax_t>*>(page, new vector<uintmax_t>));
@@ -31,6 +31,10 @@ int main(int argc, char *argv[]) {
 
             // Increase the line number
             line++;
+        }
+
+        // Output
+        if (line % size == 0) {
         }
     }
 

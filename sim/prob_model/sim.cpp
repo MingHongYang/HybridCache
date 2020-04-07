@@ -102,10 +102,11 @@ void Evict() {
         }
         candiMap[vicNode->page->getPageNumber()]->addBack(new Node(vicPage));
 
-        while (vicNode->page->getPageNumber() != vicPage->getPageNumber()) {
-            vicNode = vicNode->next;
-            dist++;
-        }
+        // Disable the distance calculation for speed
+        //while (vicNode->page->getPageNumber() != vicPage->getPageNumber()) {
+        //    vicNode = vicNode->next;
+        //    dist++;
+        //}
 
         vicPage->setPageType(F);
         vicPage->setCacheType(GHOST);
@@ -148,6 +149,12 @@ void Evict() {
             }
         }
 
+
+        for (int i = 0; i < MAX_FREQ; i++) {
+            lfu[i]->remove(vicPage->getPageNumber());
+        }
+        // Disable distance calculation for speed
+#if 0
         for (int i = 0; i < MAX_FREQ; i++) {
             vicNode = lfu[i]->getTop();
 
@@ -165,7 +172,7 @@ void Evict() {
                 break;
             }
         }
-
+#endif
         vicPage->setPageType(R);
         vicPage->setCacheType(GHOST);
         vicPage->setDist(dist);
@@ -228,7 +235,8 @@ int main(int argc, char* argv[]) {
                         int dis = victim->getDist();
                         uintmax_t pos = victim->getGhost();
 
-                        double adj = (double) dis / (double) (ghost.getTop()->page->getGhost() - pos) / DRAM_SIZE;
+                        //double adj = (double) dis / (double) (ghost.getTop()->page->getGhost() - pos) / DRAM_SIZE;
+                        double adj = 1.0 / (double) (ghost.getTop()->page->getGhost() - pos);
 
                         if (victim->getPageType() == R) {
                             rate = max(0.0, rate -adj);

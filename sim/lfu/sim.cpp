@@ -57,11 +57,6 @@ int main(int argc, char* argv[]) {
         // Read trace
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
 
-        if (u8OP == WRITE) {
-            // Skip writes
-            continue;
-        }
-
         gTotal++;
 
         // Check if it's in the cache
@@ -69,9 +64,7 @@ int main(int argc, char* argv[]) {
             if (u8OP == READ) {
                 gHit++;
             } else {
-                // We ignore write hits on pages and does not count into frequency
                 gFlush++;
-                continue;
             }
 
             // In the cache
