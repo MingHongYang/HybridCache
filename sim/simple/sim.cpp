@@ -10,7 +10,9 @@ void Evict() {
     if (victim->getMemType() == DRAM) {
         dramCnt--;
     } else {
+        nvm.remove(victim->getPageNumber());
         nvmCnt--;
+        assert(nvmCnt == nvm.getSize());
     }
 
     // Update flush counts
@@ -24,14 +26,8 @@ void Evict() {
 
 void Migrate() {
     // Migrate a page from NVM to DRAM
-    PageInfo *victim;
-    Node *vicNode = wo.getTop();
-
-    while (vicNode->page->getMemType() != NVRAM) {
-        vicNode = vicNode->next;
-    }
-
-    victim = vicNode->page;
+    PageInfo *victim = nvm.getTop()->page;
+    nvm.removeTop();
 
     // Put this page to DRAM
     victim->setMemType(DRAM);
@@ -42,6 +38,7 @@ void Migrate() {
     }
 
     nvmCnt--;
+    assert(nvmCnt == nvm.getSize());
     dramCnt++;
 }
 
@@ -84,14 +81,29 @@ int main(int argc, char* argv[]) {
                 // Check if the page should be flushed and update page status
                 if (found->getMemType() == NVRAM) {
                     // NVRAM can cache dirty pages
+                    nvm.remove(uPage);
+                    nvm.addBack(new Node(found));
+
                     if (found->getPageStatus() == DIRTY) {
                         gWHit++;
                     } else {
                         found->setPageStatus(DIRTY);
                     }
                 } else {
-                    // Write on DRAM doesn't count as hit
-                    gFlush++;
+                    // Write on DRAM doesn't count as hit, move it to NVM
+
+                    if (nvmCnt == NVRAM_SIZE) {
+                        Migrate();
+                    }
+
+                    // Move the hit page to NVM
+                    found->setPageStatus(DIRTY);
+                    found->setMemType(NVRAM);
+
+                    nvm.addBack(new Node(found));
+                    dramCnt--;
+                    nvmCnt++;
+                    assert(nvmCnt == nvm.getSize());
                 }
             } else {
                 // Reads are always hit
@@ -111,7 +123,7 @@ int main(int argc, char* argv[]) {
                     // Evict one from rw LRU first
                     Evict();
                 }
-                
+
                 // Migrate one to DRAM
                 if (nvmCnt == NVRAM_SIZE) {
                     Migrate();
@@ -126,6 +138,9 @@ int main(int argc, char* argv[]) {
 
             rw.addBack(new Node(newPage));
             wo.addBack(new Node(newPage));
+            nvm.addBack(new Node(newPage));
+            nvmCnt++;
+            assert(nvmCnt == nvm.getSize());
         }
     }
 

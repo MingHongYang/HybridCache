@@ -3,7 +3,7 @@
 unordered_map<uintmax_t, vector<Trace>*> gRecord;
 unordered_map<uintmax_t, vector<Trace>*> gWOnlyRecord;
 
-#define FENGGANG
+//#define FENGGANG
 // Usage: a.out input_file_name
 
 int main(int argc, char *argv[]) {
@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
 
     uintmax_t line = 0;
     uintmax_t page = 0;
+    int op = 0;
     uintmax_t reads = 0;
     uintmax_t writes = 0;
     uintmax_t rr = 0;
@@ -48,11 +49,12 @@ int main(int argc, char *argv[]) {
     while (!feof(pInput)) {
 
         // Read from file
-        fscanf(pInput, "%" SCNuMAX " %d", &page, &tempTrace.operation);
+        fscanf(pInput, "%" SCNuMAX " %d", &page, &op);
 
+        tempTrace.operation = (op == 1) ? READ : WRITE;
         tempTrace.line = line;
 
-        if (tempTrace.operation == 0) {
+        if (tempTrace.operation == WRITE) {
             Trace tmpWrite;
             writes++;
 #ifdef FENGGANG

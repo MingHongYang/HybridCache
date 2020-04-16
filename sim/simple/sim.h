@@ -26,6 +26,8 @@ unordered_map<uintmax_t, PageInfo *> sysMap;
 LinkedList rw;
 LinkedList wo;
 
+LinkedList nvm;
+
 int evictF = 0;
 
 uint32_t NVRAM_SIZE = 0;
