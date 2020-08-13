@@ -18,7 +18,7 @@ using namespace std;
 #include "../linkedlist/LinkedList.h"
 
 #define DEBUG false
-
+#define WF false
 // Global time stamp
 uintmax_t gTimeStamp = 0;
 
@@ -46,10 +46,10 @@ uint32_t NVRAM_SIZE = 0;
 uint32_t DRAM_SIZE = 0;
 uint32_t TOTAL_SIZE = 0;
 
-uint32_t TARGET_READ_SIZE = 0;
-uint32_t TARGET_WRITE_SIZE = 0;
-uint32_t TARGET_RR_SIZE = 0;
-uint32_t TARGET_RF_SIZE = 0;
-uint32_t TARGET_WR_SIZE = 0;
-uint32_t TARGET_WF_SIZE = 0;
+double TARGET_READ_SIZE = 0;
+double TARGET_WRITE_SIZE = 0;
+double TARGET_RR_SIZE = 0;
+double TARGET_RF_SIZE = 0;
+double TARGET_WR_SIZE = 0;
+double TARGET_WF_SIZE = 0;
 

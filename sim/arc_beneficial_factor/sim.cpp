@@ -7,7 +7,7 @@ void CheckSize(FILE *pFile) {
 
     assert(read + write <= TOTAL_SIZE);
 
-    fprintf(pFile, "%d %d %d %d %d %d %d %d %d %d\n", TARGET_WRITE_SIZE, TARGET_WF_SIZE, TARGET_WR_SIZE, TARGET_READ_SIZE, TARGET_RF_SIZE, TARGET_RR_SIZE, wfrCache.getSize(), wrrCache.getSize(), rfrCache.getSize(), rrrCache.getSize());
+    fprintf(pFile, "%f %f %f %f %f %f %d %d %d %d\n", TARGET_WRITE_SIZE, TARGET_WF_SIZE, TARGET_WR_SIZE, TARGET_READ_SIZE, TARGET_RF_SIZE, TARGET_RR_SIZE, wfrCache.getSize(), wrrCache.getSize(), rfrCache.getSize(), rrrCache.getSize());
 
 #if DEBUG
     cout << "***" << endl;
@@ -18,19 +18,35 @@ void CheckSize(FILE *pFile) {
 #endif
 }
 
-int AdjustedValue(CacheType type, OPType op, MemType loc) {
+double AdjustedValue(CacheType type, OPType op, MemType loc) {
+    double size = 0.0;
+
+    switch(type) {
+        case RRR:
+        case RFR:
+            size = rrrCache.getSize() + rfrCache.getSize();
+            break;
+        case WRR:
+        case WFR:
+            size = wrrCache.getSize() + wfrCache.getSize();
+            break;
+        default:
+            // Hit on ghost caches return value as 1.0
+            return 1.0;
+    }
+
     switch(op) {
         case READ:
             if (loc == DRAM) {
-                return DRAM_R;
+                return DRAM_R / size;
             } else {
-                return NVRAM_R;
+                return NVRAM_R / size;
             }
         case WRITE:
             if (loc == DRAM) {
-                return DRAM_W;
+                return DRAM_W / size;
             } else {
-                return NVRAM_W;
+                return NVRAM_W / size;
             }
             break;
         default:
@@ -38,100 +54,100 @@ int AdjustedValue(CacheType type, OPType op, MemType loc) {
             break;
     }
 
-    return 0;
+    return 0.0;
 }
 
 void UpdateTargetSize(CacheType type, OPType op, MemType loc) {
     // Update the target size when hitting on type cache
 
-    int val = AdjustedValue(type, op, loc);
-    if (val == 0) {
+    double val = AdjustedValue(type, op, loc);
+    if (val == 0.0) {
         return;
     }
 
     switch (type) {
         case RRR:
+            TARGET_READ_SIZE = min(TARGET_READ_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_RR_SIZE = min(TARGET_RR_SIZE + val, TARGET_READ_SIZE - 1.0);
+            TARGET_RF_SIZE = max(TARGET_READ_SIZE - TARGET_RR_SIZE, 1.0);
+            TARGET_WRITE_SIZE = max(TOTAL_SIZE - TARGET_READ_SIZE, 1.0);
+            TARGET_WF_SIZE = max(TARGET_WRITE_SIZE - TARGET_WR_SIZE, 1.0);
             break;
         case RRG:
-            if (val > 0) {
-                TARGET_READ_SIZE = min((int)TARGET_READ_SIZE + val, (int)TOTAL_SIZE - 1);
-                TARGET_RR_SIZE = min((int)TARGET_RR_SIZE + val, (int)TARGET_READ_SIZE - 1);
-            } else {
-                TARGET_READ_SIZE = max((int)TARGET_READ_SIZE + val, 1);
-                TARGET_RR_SIZE = max((int)TARGET_RR_SIZE + val, 1);
-            }
-            TARGET_WRITE_SIZE = max((int)(TOTAL_SIZE - TARGET_READ_SIZE), 1);
-            TARGET_RF_SIZE = max((int)(TARGET_READ_SIZE - TARGET_RR_SIZE), 1);
-            TARGET_WR_SIZE = max((int)(TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1);
+            TARGET_READ_SIZE = min(TARGET_READ_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_RR_SIZE = min(TARGET_RR_SIZE + val, TARGET_READ_SIZE - 1.0);
+            TARGET_WRITE_SIZE = max((TOTAL_SIZE - TARGET_READ_SIZE), 1.0);
+            TARGET_RF_SIZE = max((TARGET_READ_SIZE - TARGET_RR_SIZE), 1.0);
+            TARGET_WR_SIZE = max((TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1.0);
             break;
         case RFR:
+            TARGET_READ_SIZE = min(TARGET_READ_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_RF_SIZE = min(TARGET_RF_SIZE + val, TARGET_READ_SIZE - 1.0);
+            TARGET_RR_SIZE = max((TARGET_READ_SIZE - TARGET_RF_SIZE), 1.0);
+            TARGET_WRITE_SIZE = max((TOTAL_SIZE - TARGET_READ_SIZE), 1.0);
+            TARGET_WF_SIZE = max((TARGET_WRITE_SIZE - TARGET_WR_SIZE), 1.0);
             break;
         case RFG:
-            if (val > 0) {
-                TARGET_READ_SIZE = min((int)TARGET_READ_SIZE + val, (int)TOTAL_SIZE - 1);
-                TARGET_RF_SIZE = min((int)TARGET_RF_SIZE + val, (int)TARGET_READ_SIZE - 1);
-            } else {
-                TARGET_READ_SIZE = max((int)TARGET_READ_SIZE + val, 1);
-                TARGET_RF_SIZE = max((int)TARGET_RF_SIZE + val, 1);
-            }
-            TARGET_WRITE_SIZE = max((int)(TOTAL_SIZE - TARGET_READ_SIZE), 1);
-            TARGET_RR_SIZE = max((int)(TARGET_READ_SIZE - TARGET_RF_SIZE), 1);
-            TARGET_WR_SIZE = max((int)(TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1);
+            TARGET_READ_SIZE = min(TARGET_READ_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_RF_SIZE = min(TARGET_RF_SIZE + val, TARGET_READ_SIZE - 1.0);
+            TARGET_WRITE_SIZE = max((TOTAL_SIZE - TARGET_READ_SIZE), 1.0);
+            TARGET_RR_SIZE = max((TARGET_READ_SIZE - TARGET_RF_SIZE), 1.0);
+            TARGET_WR_SIZE = max((TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1.0);
             break;
         case WRR:
+            TARGET_WRITE_SIZE = min(TARGET_WRITE_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_WR_SIZE = min(TARGET_WR_SIZE + val, TARGET_WRITE_SIZE - 1.0);
+            TARGET_WF_SIZE = max((TARGET_WRITE_SIZE - TARGET_WR_SIZE), 1.0);
+            TARGET_READ_SIZE = max((TOTAL_SIZE - TARGET_WRITE_SIZE), 1.0);
+            TARGET_RF_SIZE = max((TARGET_READ_SIZE - TARGET_RR_SIZE), 1.0);
             break;
         case WRG:
-            if (val > 0) {
-                TARGET_WRITE_SIZE = min((int)TARGET_WRITE_SIZE + val, (int)TOTAL_SIZE - 1);
-                TARGET_WR_SIZE = min((int)TARGET_WR_SIZE + val, (int)TARGET_WRITE_SIZE - 1);
-            } else {
-                TARGET_WRITE_SIZE = max((int)TARGET_WRITE_SIZE + val, (int)TOTAL_SIZE - 1);
-                TARGET_WR_SIZE = max((int)TARGET_WR_SIZE + val, (int)TARGET_WRITE_SIZE - 1);
-            }
-            TARGET_READ_SIZE = max((int)(TOTAL_SIZE - TARGET_WRITE_SIZE), 1);
-            TARGET_WF_SIZE = max((int)(TARGET_WRITE_SIZE - TARGET_WR_SIZE), 1);
-            TARGET_RR_SIZE = max((int)(TARGET_READ_SIZE - TARGET_RF_SIZE), 1);
+            TARGET_WRITE_SIZE = min(TARGET_WRITE_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_WR_SIZE = min(TARGET_WR_SIZE + val, TARGET_WRITE_SIZE - 1.0);
+            TARGET_READ_SIZE = max((TOTAL_SIZE - TARGET_WRITE_SIZE), 1.0);
+            TARGET_WF_SIZE = max((TARGET_WRITE_SIZE - TARGET_WR_SIZE), 1.0);
+            TARGET_RR_SIZE = max((TARGET_READ_SIZE - TARGET_RF_SIZE), 1.0);
             break;
         case WFR:
+            TARGET_WRITE_SIZE = min(TARGET_WRITE_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_WF_SIZE = min(TARGET_WF_SIZE + val, TARGET_WRITE_SIZE - 1.0);
+            TARGET_WR_SIZE = max((TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1.0);
+            TARGET_READ_SIZE = max((TOTAL_SIZE - TARGET_WRITE_SIZE), 1.0);
+            TARGET_RF_SIZE = max((TARGET_READ_SIZE - TARGET_RR_SIZE), 1.0);
             break;
         case WFG:
-            if (val > 0) {
-                TARGET_WRITE_SIZE = min((int)TARGET_WRITE_SIZE + val, (int)TOTAL_SIZE - 1);
-                TARGET_WF_SIZE = min((int)TARGET_WF_SIZE + val, (int)TARGET_WRITE_SIZE - 1);
-            } else {
-                TARGET_WRITE_SIZE = max((int)TARGET_WRITE_SIZE + val, 1);
-                TARGET_WF_SIZE = max((int)TARGET_WF_SIZE + val, 1);
-            }
-            TARGET_READ_SIZE = max((int)(TOTAL_SIZE - TARGET_WRITE_SIZE), 1);
-            TARGET_WR_SIZE = max((int)(TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1);
-            TARGET_RR_SIZE = max((int)(TARGET_READ_SIZE - TARGET_RF_SIZE), 1);
+            TARGET_WRITE_SIZE = min(TARGET_WRITE_SIZE + val, TOTAL_SIZE - 1.0);
+            TARGET_WF_SIZE = min(TARGET_WF_SIZE + val, TARGET_WRITE_SIZE - 1.0);
+            TARGET_READ_SIZE = max((TOTAL_SIZE - TARGET_WRITE_SIZE), 1.0);
+            TARGET_WR_SIZE = max((TARGET_WRITE_SIZE - TARGET_WF_SIZE), 1.0);
+            TARGET_RR_SIZE = max((TARGET_READ_SIZE - TARGET_RF_SIZE), 1.0);
             break;
     }
 
     return;
 }
 
-int TargetSize(CacheType type) {
+double TargetSize(CacheType type) {
     switch (type) {
         case RRR:
-            return (int)TARGET_RR_SIZE;
+            return TARGET_RR_SIZE;
         case RRG:
-            return (int)max((int)(TARGET_WRITE_SIZE * TARGET_RF_SIZE / TARGET_READ_SIZE), 1);
+            return max((TARGET_WRITE_SIZE * TARGET_RF_SIZE / TARGET_READ_SIZE), 1.0);
         case RFR:
-            return (int)TARGET_RF_SIZE;
+            return TARGET_RF_SIZE;
         case RFG:
-            return max((int)TARGET_WRITE_SIZE - TargetSize(RRG), 1);
+            return max(TARGET_WRITE_SIZE - TargetSize(RRG), 1.0);
         case WRR:
-            return (int)TARGET_WR_SIZE;
+            return TARGET_WR_SIZE;
         case WRG:
-            return (int)max((int)(TARGET_READ_SIZE * TARGET_WF_SIZE / TARGET_WRITE_SIZE), 1);
+            return max((TARGET_READ_SIZE * TARGET_WF_SIZE / TARGET_WRITE_SIZE), 1.0);
         case WFR:
-            return (int)TARGET_WF_SIZE;
+            return TARGET_WF_SIZE;
         case WFG:
-            return max((int)TARGET_READ_SIZE - TargetSize(WRG), 1);
+            return max(TARGET_READ_SIZE - TargetSize(WRG), 1.0);
     }
 
-    return 0;
+    return 0.0;
 }
 
 void EvictReal(LinkedList *real, LinkedList *ghost, CacheType type) {
@@ -182,9 +198,9 @@ void Evict(void) {
         // Initialize
         TARGET_READ_SIZE = readSize;
         TARGET_WRITE_SIZE = writeSize;
-        TARGET_RR_SIZE = (int)(readSize / 2);
+        TARGET_RR_SIZE = rrrCache.getSize();
         TARGET_RF_SIZE = readSize - TARGET_RR_SIZE;
-        TARGET_WR_SIZE = (int)(writeSize / 2);
+        TARGET_WR_SIZE = wrrCache.getSize();
         TARGET_WF_SIZE = writeSize - TARGET_WR_SIZE;
     }
 
@@ -281,8 +297,8 @@ int main(int argc, char* argv[]) {
         fscanf(pfInput, "%" SCNuMAX " %" SCNu8, &uPage, &u8OP);
 
         // Print every 50 lines
-        if (lines % 50 == 0)
-            CheckSize(pfStat);
+        //if (lines % 50 == 0)
+        //CheckSize(pfStat);
         lines++;
 
         // Check if it's in the cache
@@ -291,6 +307,9 @@ int main(int argc, char* argv[]) {
             PageInfo *found = sysMap[uPage];
             found->setTimeStamp(gTimeStamp);
             found->getList()->remove(uPage);
+
+            // Update size for all the hits
+            UpdateTargetSize(found->getCacheType(), (u8OP == WRITE ? WRITE : READ), found->getMemType());
 
             if (u8OP == WRITE) {
                 // WRITE
@@ -317,14 +336,19 @@ int main(int argc, char* argv[]) {
                             gNumWonNVRAM++;
                         }
 
+#if WF
                         found->setCacheType(WFR);
                         found->setList(&wfrCache);
+#else
+                        found->setCacheType(WRR);
+                        found->setList(&wrrCache);
+#endif
                         found->getList()->addBack(new Node(found));
                         break;
 
                     case RRG:
                         // TODO: When write hits on clean pages, should we move them to NVM immediately? Now we move to NVM immediately
-                        UpdateTargetSize(RRG, WRITE, found->getMemType());
+                        //UpdateTargetSize(RRG, WRITE, found->getMemType());
                         Evict();
 
                         // Ghost cache hit
@@ -337,8 +361,13 @@ int main(int argc, char* argv[]) {
                             found->setMemType(DRAM);
                         }
 
+#if WF
                         found->setCacheType(WFR);
                         found->setList(&wfrCache);
+#else
+                        found->setCacheType(WRR);
+                        found->setList(&wrrCache);
+#endif
                         found->getList()->addBack(new Node(found));
                         break;
 
@@ -354,13 +383,18 @@ int main(int argc, char* argv[]) {
                             gNumWonNVRAM++;
                         }
 
+#if WF
                         found->setCacheType(WFR);
                         found->setList(&wfrCache);
+#else
+                        found->setCacheType(WRR);
+                        found->setList(&wrrCache);
+#endif
                         found->getList()->addBack(new Node(found));
                         break;
 
                     case RFG:
-                        UpdateTargetSize(RFG, WRITE, found->getMemType());
+                        //UpdateTargetSize(RFG, WRITE, found->getMemType());
 
                         Evict();
 
@@ -374,8 +408,13 @@ int main(int argc, char* argv[]) {
                             found->setMemType(DRAM);
                         }
 
+#if WF
                         found->setCacheType(WFR);
                         found->setList(&wfrCache);
+#else
+                        found->setCacheType(WRR);
+                        found->setList(&wrrCache);
+#endif
                         found->getList()->addBack(new Node(found));
                         break;
 
@@ -397,7 +436,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case WRG:
-                        UpdateTargetSize(WRG, WRITE, found->getMemType());
+                        //UpdateTargetSize(WRG, WRITE, found->getMemType());
 
                         Evict();
 
@@ -432,7 +471,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case WFG:
-                        UpdateTargetSize(WFG, WRITE, found->getMemType());
+                        //UpdateTargetSize(WFG, WRITE, found->getMemType());
 
                         Evict();
 
@@ -477,7 +516,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case RRG:
-                        UpdateTargetSize(RRG, READ, found->getMemType());
+                        //UpdateTargetSize(RRG, READ, found->getMemType());
 
                         Evict();
 
@@ -504,7 +543,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case RFG:
-                        UpdateTargetSize(RFG, READ, found->getMemType());
+                        //UpdateTargetSize(RFG, READ, found->getMemType());
 
                         Evict();
 
@@ -532,7 +571,7 @@ int main(int argc, char* argv[]) {
 
                     case WRG:
                         // TODO: When read hits on dirty pages in ghost, should we move them to DRAM? Keep them in WFR as they are dirty pages.
-                        UpdateTargetSize(WRG, READ, found->getMemType());
+                        //UpdateTargetSize(WRG, READ, found->getMemType());
 
                         Evict();
 
@@ -559,7 +598,7 @@ int main(int argc, char* argv[]) {
                         break;
 
                     case WFG:
-                        UpdateTargetSize(WFG, READ, found->getMemType());
+                        //UpdateTargetSize(WFG, READ, found->getMemType());
 
                         Evict();
 
